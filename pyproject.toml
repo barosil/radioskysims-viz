@@ -25,6 +25,10 @@ dependencies = [
   "panel>=1.7.0",
   "holoviews>=1.20.2",
   "hvplot>=0.10",
+  "radioskysims-core",
+  "radioskysims-beam",
+  "scikit-learn>=1.8.0",
+  "cartopy>=0.25.0",
 ]
 
 [project.urls]
