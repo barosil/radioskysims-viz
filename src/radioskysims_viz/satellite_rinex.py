@@ -51,31 +51,21 @@ def rinex_signals_plot(
     fig, ax = plt.subplots(figsize=figsize)
     ax.set_xlabel("frequência (MHz)")
     ax.set_ylabel("PSD (dBW/Hz)")
-    if (
-        "sv" not in ds.coords
-        or ds.sizes.get("sv", 0) == 0
-        or ds.sizes.get("freq", 0) == 0
-    ):
+    if "sv" not in ds.coords or ds.sizes.get("sv", 0) == 0 or ds.sizes.get("freq", 0) == 0:
         ax.set_title(title or "RINEX satellites — PSD analítica")
         fig.tight_layout()
         return fig
 
     freqs = np.asarray(ds["freq"].values, dtype=float)
     svs = list(ds["sv"].values)
-    cons = (
-        list(ds["constellation"].values)
-        if "constellation" in ds.coords
-        else [""] * len(svs)
-    )
+    cons = list(ds["constellation"].values) if "constellation" in ds.coords else [""] * len(svs)
 
     cm = plt.get_cmap(cmap)
     unique_cons: list[str] = []
     for c in cons:
         if c not in unique_cons:
             unique_cons.append(c)
-    cons_color = {
-        c: cm(i / max(len(unique_cons) - 1, 1)) for i, c in enumerate(unique_cons)
-    }
+    cons_color = {c: cm(i / max(len(unique_cons) - 1, 1)) for i, c in enumerate(unique_cons)}
 
     for i, sv in enumerate(svs):
         psd = np.asarray(ds["PSD"].sel(sv=sv).values, dtype=float)

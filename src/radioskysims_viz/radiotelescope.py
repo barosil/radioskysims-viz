@@ -185,11 +185,7 @@ def _fwhm_vs_frequency(antenna: Any, beam: Any) -> dict[float, float]:
     pol = _beam_polarization(antenna, beam)
     i_pol = pols.index(pol) if pol in pols else 0
     wanted = set(_beam_frequencies(beam, getattr(antenna, "frequency_range", None)))
-    return {
-        f: float(fwhm[i_pol, j])
-        for j, f in enumerate(freqs_mhz)
-        if f in wanted
-    }
+    return {f: float(fwhm[i_pol, j]) for j, f in enumerate(freqs_mhz) if f in wanted}
 
 
 def _pick_beam_frequencies(
@@ -427,11 +423,7 @@ def beam_pattern_plot(antennas: Any, *, n_freqs: int = 5) -> hv.Overlay:
         for i, freq in enumerate(freqs):
             row = resp[i]
             p_max = float(row.max())
-            db = (
-                10.0 * np.log10(row / p_max)
-                if p_max > 0.0
-                else np.full_like(row, -np.inf)
-            )
+            db = 10.0 * np.log10(row / p_max) if p_max > 0.0 else np.full_like(row, -np.inf)
             curves.append(
                 hv.Curve(
                     list(zip(angles, db, strict=False)),

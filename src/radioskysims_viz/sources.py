@@ -136,11 +136,7 @@ def radio_sources_flux(
     freqs = np.asarray(freqs_mhz, dtype=float)
     fig, ax = plt.subplots(figsize=figsize)
 
-    vals = (
-        np.concatenate(list(flux_by_source.values()))
-        if flux_by_source
-        else np.array([1.0])
-    )
+    vals = np.concatenate(list(flux_by_source.values())) if flux_by_source else np.array([1.0])
     use_log = bool(loglog) and bool(np.all(vals > 0))
     if use_log:
         ax.set_xscale("log")
@@ -151,9 +147,7 @@ def radio_sources_flux(
     for i, (sid, f) in enumerate(flux_by_source.items()):
         f = np.asarray(f, dtype=float)
         lbl = sid if i < n_legend else None
-        ax.plot(
-            freqs, f, color=cm(i / max(n - 1, 1)), lw=1.2, alpha=0.85, label=lbl
-        )
+        ax.plot(freqs, f, color=cm(i / max(n - 1, 1)), lw=1.2, alpha=0.85, label=lbl)
 
     if sum_line and flux_by_source:
         total = np.sum(np.stack(list(flux_by_source.values())), axis=0)
@@ -230,9 +224,7 @@ def sun_mollweide(
     """
     ra = np.asarray(ra_rad, dtype=float)
     dec = np.asarray(dec_rad, dtype=float)
-    fig, ax = _mollweide_figure(
-        title or "Sun — Mollweide (RA/Dec)", figsize, coastlines=coastlines
-    )
+    fig, ax = _mollweide_figure(title or "Sun — Mollweide (RA/Dec)", figsize, coastlines=coastlines)
     x = _wrap_ra(ra)
     ax.plot(x, dec, "-", color="#ff8c00", lw=1.6, alpha=0.8)
     ax.scatter(x, dec, s=30, color="#ff8c00", zorder=5, label="Sun")

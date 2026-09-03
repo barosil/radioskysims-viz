@@ -57,11 +57,7 @@ def _subpoint_latlon(ds: Any) -> tuple[np.ndarray, np.ndarray]:
     for i in range(ds.sizes["satellite"]):
         tle1 = str(ds.tle_line1.values[i]).strip()
         tle2 = str(ds.tle_line2.values[i]).strip()
-        name = (
-            str(ds.names.values[i])
-            if has_names
-            else str(ds.satellite.values[i])
-        )
+        name = str(ds.names.values[i]) if has_names else str(ds.satellite.values[i])
         sat = EarthSatellite(tle1, tle2, name, ts)
         ecef = sat.at(times).frame_xyz(itrs).m  # (3, N)
         x, y, z = ecef[0], ecef[1], ecef[2]
@@ -144,10 +140,7 @@ def _draw_coastlines(
         return False
 
     lc = LineCollection(
-        [
-            np.column_stack([np.radians(slon), np.radians(slat)])
-            for slon, slat in segments
-        ],
+        [np.column_stack([np.radians(slon), np.radians(slat)]) for slon, slat in segments],
         colors=color,
         linewidths=linewidth,
         alpha=alpha,
@@ -190,9 +183,7 @@ class _Kde2D:
 
         self._metric = metric
         mask = ~(np.isnan(lon) | np.isnan(lat))
-        xy_deg = np.stack(
-            [np.asarray(lon)[mask], np.asarray(lat)[mask]], axis=-1
-        )
+        xy_deg = np.stack([np.asarray(lon)[mask], np.asarray(lat)[mask]], axis=-1)
         if len(xy_deg) < 5:
             self._kde = None
             return
@@ -204,9 +195,7 @@ class _Kde2D:
         else:
             self._bw = float(bandwidth)
             self._xy = xy_deg
-        self._kde = KernelDensity(
-            bandwidth=self._bw, kernel="gaussian", metric=metric
-        )
+        self._kde = KernelDensity(bandwidth=self._bw, kernel="gaussian", metric=metric)
         self._kde.fit(self._xy)
 
     def __bool__(self) -> bool:
@@ -224,9 +213,7 @@ class _Kde2D:
 
     def score_points(self, lon: np.ndarray, lat: np.ndarray) -> np.ndarray:
         """Densidade linear nos pontos dados (lon/lat em graus)."""
-        pts = np.stack(
-            [np.asarray(lon).ravel(), np.asarray(lat).ravel()], axis=-1
-        )
+        pts = np.stack([np.asarray(lon).ravel(), np.asarray(lat).ravel()], axis=-1)
         if self._metric == "haversine":
             pts = np.radians(pts)
         return np.exp(self._kde.score_samples(pts))
@@ -379,8 +366,13 @@ def tracks_mollweide(
     density = None
     if contours and not kde:
         density = _density_contours(
-            ax, lon, lat, n_levels=n_levels, cmap=cmap,
-            bandwidth=bandwidth, metric=metric,
+            ax,
+            lon,
+            lat,
+            n_levels=n_levels,
+            cmap=cmap,
+            bandwidth=bandwidth,
+            metric=metric,
         )
 
     # Agrupamento (por constelação ou por satélite)
@@ -480,11 +472,7 @@ def signals_plot(
     ds = signals_ds
     sat_ids = np.asarray(ds.satellite.values)
     freq = np.asarray(ds["freq"].values)
-    fc = (
-        np.asarray(ds["fc"].values)
-        if "fc" in ds.coords
-        else np.full(sat_ids.shape, np.nan)
-    )
+    fc = np.asarray(ds["fc"].values) if "fc" in ds.coords else np.full(sat_ids.shape, np.nan)
     mod = (
         np.asarray(ds["modulation"].values, dtype=str)
         if "modulation" in ds.coords
