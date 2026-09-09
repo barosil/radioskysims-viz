@@ -16,10 +16,26 @@ from pathlib import Path
 from typing import Any
 
 import holoviews as hv
+from radioskysims_core.paths import get_project_root
 
 __all__ = ["save_figure", "save_plot"]
 
 _VALID_FORMATS = frozenset({"html", "png", "svg", "pdf"})
+
+
+def _resolve_outdir(outdir: str | Path | None) -> Path:
+    """Resolve o diretório de saída de forma independente do CWD.
+
+    - ``None`` → ``<raiz>/notebooks/plots`` (default p/ outputs de notebook);
+    - caminho absoluto → como está;
+    - relativo → ancorado na raiz do projeto (:func:`get_project_root`).
+    """
+    if outdir is None:
+        return get_project_root() / "notebooks" / "plots"
+    path = Path(outdir)
+    if path.is_absolute():
+        return path
+    return get_project_root() / path
 
 
 def save_figure(
@@ -28,7 +44,7 @@ def save_figure(
     *,
     fmt: str = "png",
     dpi: int = 150,
-    outdir: str | Path = "plots",
+    outdir: str | Path | None = None,
     verbose: bool = True,
 ) -> Path:
     """Salva uma ``matplotlib.Figure`` (ex.: Mollweide de tracks).
@@ -38,7 +54,8 @@ def save_figure(
         name: Nome base do arquivo (sem extensão).
         fmt: Formato — ``"png"``/``"svg"``/``"pdf"``.
         dpi: Resolução de saída.
-        outdir: Pasta de saída (relativa ao cwd por padrão).
+        outdir: Pasta de saída. Default: ``<raiz>/notebooks/plots``; relativo
+            resolve contra a raiz do projeto (independe do CWD).
         verbose: Se True, imprime o caminho do arquivo salvo.
 
     Returns:
@@ -47,7 +64,7 @@ def save_figure(
     if fmt not in {"png", "svg", "pdf"}:
         msg = f"Formato não suportado para figure: {fmt!r}. Use png/svg/pdf."
         raise ValueError(msg)
-    outdir = Path(outdir)
+    outdir = _resolve_outdir(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{name}.{fmt}"
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
@@ -62,7 +79,7 @@ def save_plot(
     *,
     fmt: str = "html",
     dpi: int = 150,
-    outdir: str | Path = "plots",
+    outdir: str | Path | None = None,
     verbose: bool = True,
 ) -> Path:
     """Salva um plot holoviews em arquivo.
@@ -75,7 +92,8 @@ def save_plot(
             ou ``"png"``/``"svg"``/``"pdf"`` (via backend matplotlib, sem
             selenium).
         dpi: Resolução usada na exportação de imagem (matplotlib).
-        outdir: Pasta de saída (relativa ao cwd por padrão).
+        outdir: Pasta de saída. Default: ``<raiz>/notebooks/plots``; relativo
+            resolve contra a raiz do projeto (independe do CWD).
         verbose: Se True, imprime o caminho do arquivo salvo.
 
     Returns:
@@ -93,7 +111,7 @@ def save_plot(
         msg = f"Formato não suportado: {fmt!r}. Use um de: {sorted(_VALID_FORMATS)}"
         raise ValueError(msg)
 
-    outdir = Path(outdir)
+    outdir = _resolve_outdir(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{name}.{fmt}"
     if fmt == "html":
