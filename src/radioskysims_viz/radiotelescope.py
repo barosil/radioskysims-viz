@@ -188,6 +188,24 @@ def _fwhm_vs_frequency(antenna: Any, beam: Any) -> dict[float, float]:
     return {f: float(fwhm[i_pol, j]) for j, f in enumerate(freqs_mhz) if f in wanted}
 
 
+def _omega_vs_frequency(antenna: Any, beam: Any) -> dict[float, float]:
+    """Ângulo sólido Ω (sr) por frequência, **integrando o feixe**.
+
+    Ω = 2π ∫ B_n(θ) sinθ dθ com o padrão de potência dobrado por simetria
+    (``BeamProperties.compute_properties`` → ``omega``).
+    """
+    from radioskysims_beam.domain.beam import BeamProperties
+
+    ds_props = BeamProperties.compute_properties(beam.dataset)
+    omega = _materialize(ds_props["omega"].values)  # shape (n_pol, n_freq)
+    freqs_mhz = _ds_frequencies_mhz(beam)
+    pols = [str(p) for p in _materialize(ds_props["polarization"].values)]
+    pol = _beam_polarization(antenna, beam)
+    i_pol = pols.index(pol) if pol in pols else 0
+    wanted = set(_beam_frequencies(beam, getattr(antenna, "frequency_range", None)))
+    return {f: float(omega[i_pol, j]) for j, f in enumerate(freqs_mhz) if f in wanted}
+
+
 def _pick_beam_frequencies(
     beam: Any,
     frequency_range: Any,
@@ -342,9 +360,10 @@ def fwhm_plot(antennas: Any, *, n_freqs: int = 17) -> hv.Overlay:
 def gain_plot(antennas: Any, *, n_freqs: int = 17) -> hv.Overlay:
     """Curvas Ganho (dBi) × frequência (uma por antena), com marcadores.
 
-    Com ``effective_area_m2`` usa ``G = 4π A / λ²``; senão estima pelo
-    ângulo sólido do feixe (``G ≈ 4π / (1.133 θ²)``), com θ = FWHM(f)
-    calculado a partir do Beam (lazy → compute).
+    O ganho usa o **ângulo sólido integrado do feixe** (``G = 4π/Ω``, com
+    Ω = 2π ∫ B_n(θ) sinθ dθ dobrado por simetria); na ausência do feixe, cai
+    para ``G = 4π A_eff / λ²`` (área efetiva) e, por fim, para a estimativa
+    gaussiana Ω ≈ 1.133·θ² com θ = FWHM(f).
     """
     plots: list[hv.Overlay] = []
     for i, antenna in enumerate(antennas):
@@ -352,14 +371,24 @@ def gain_plot(antennas: Any, *, n_freqs: int = 17) -> hv.Overlay:
         fr = getattr(antenna, "frequency_range", None)
         eff_area = getattr(antenna, "effective_area_m2", None)
         beam = _load_beam(antenna)
+        omega_map = _omega_vs_frequency(antenna, beam) if beam is not None else {}
         fwhm_map = _fwhm_vs_frequency(antenna, beam) if beam is not None else {}
-        if fwhm_map:
+        if omega_map:
+            xs = list(omega_map)
+        elif fwhm_map:
             xs = list(fwhm_map)
         else:
             xs = _frequency_grid(fr, n_freqs)
         ys: list[float] = []
         for f in xs:
             lam = _SPEED_OF_LIGHT_M_S / (f * 1e6)
+            omega = omega_map.get(f)
+            if omega is not None and omega > 0.0:
+                # Ω integrado do próprio feixe (padrão de potência dobrado
+                # por simetria): G = 4π/Ω (Kraus).
+                gain = 4.0 * math.pi / omega
+                ys.append(10.0 * math.log10(gain) if gain > 0.0 else np.nan)
+                continue
             if eff_area is not None:
                 gain = 4.0 * math.pi * eff_area / (lam * lam)
                 ys.append(10.0 * math.log10(gain) if gain > 0.0 else np.nan)
