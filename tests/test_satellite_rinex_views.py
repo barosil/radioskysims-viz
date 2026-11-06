@@ -24,9 +24,7 @@ from radioskysims_viz.satellite_rinex import (  # noqa: E402
 
 
 def _rinex_ds() -> xr.Dataset:
-    times = np.array(
-        ["2024-06-10T00:00:00", "2024-06-10T01:00:00"], dtype="datetime64[ns]"
-    )
+    times = np.array(["2024-06-10T00:00:00", "2024-06-10T01:00:00"], dtype="datetime64[ns]")
     svs = ["G01", "G02"]
     return xr.Dataset(
         {

@@ -116,16 +116,12 @@ def test_tracks_mollweide_by_constellation_legend():
 
 def test_tracks_mollweide_tracks_false_keeps_contours_legend():
     # sem tracks individuais, mas com contornos → legenda por constelação mantida
-    fig = tracks_mollweide(
-        _tracks_ds(), by="constellation", contours=True, tracks=False
-    )
+    fig = tracks_mollweide(_tracks_ds(), by="constellation", contours=True, tracks=False)
     legend = fig.axes[0].get_legend()
     texts = [t.get_text() for t in legend.get_texts()]
     assert "ISS" in texts
     # nada de linhas de track desenhadas (sem Line2D de segmentos)
-    lines = [
-        ln for ln in fig.axes[0].get_lines() if ln.get_xdata().size > 0
-    ]
+    lines = [ln for ln in fig.axes[0].get_lines() if ln.get_xdata().size > 0]
     assert len(lines) == 0
     matplotlib.pyplot.close(fig)
 
@@ -167,9 +163,7 @@ def test_tracks_mollweide_contours_global_single_kde_over_all_tracks():
     # Uma ÚNICA KDE global (1 contourf + 1 contorno), independente da
     # constelação: com 2 constelações → 2 QuadContourSets (não 4, como seria
     # se houvesse 1 footprint por grupo) + colorbar horizontal inferior.
-    fig = tracks_mollweide(
-        _tracks_ds_multi(), by="constellation", contours=True, n_levels=5
-    )
+    fig = tracks_mollweide(_tracks_ds_multi(), by="constellation", contours=True, n_levels=5)
     qcs = _contour_sets(fig.axes[0])
     assert len(qcs) == 2
     assert len(qcs[0].levels) - 1 == 5

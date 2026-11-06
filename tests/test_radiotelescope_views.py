@@ -76,9 +76,7 @@ class TestObserverMap:
         assert isinstance(point, hv.Points)
         # O ponto é projetado para Web Mercator (EPSG:3857) para sobrepor os tiles
         x = 6378137.0 * math.radians(-35.90813)
-        y = 6378137.0 * math.log(
-            math.tan(math.pi / 4.0 + math.radians(-7.211637) / 2.0)
-        )
+        y = 6378137.0 * math.log(math.tan(math.pi / 4.0 + math.radians(-7.211637) / 2.0))
         assert float(point["x"].data[0]) == pytest.approx(x)
         assert float(point["y"].data[0]) == pytest.approx(y)
 
